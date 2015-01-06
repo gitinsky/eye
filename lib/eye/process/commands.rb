@@ -11,6 +11,27 @@ module Eye::Process::Commands
       return :no_start_command
     end
 
+    if self[:pre_start_command]
+      debug { "executing pre_start_command #{self[:pre_start_command]}" }
+
+      res = execute(self[:pre_start_command], config.merge(:timeout => config[:start_timeout]))
+      if res[:error]
+
+        if res[:error].message == 'Permission denied - open'
+          error "execution of pre_start_command failed with #{res[:error].inspect}; ensure that #{[self[:stdout], self[:stderr]]} are writable"
+        elsif res[:error].class == Timeout::Error
+          error "execution of pre_start_command failed with #{res[:error].inspect}; try increasing the start_timeout value (the current value of #{self[:start_timeout]}s seems too short)"
+        else
+          error "execution of pre_start_command failed with #{res[:error].inspect}"
+        end
+
+        self.pid = nil
+        switch :crashed
+
+        return {:error => res[:error].inspect}
+      end
+    end
+
     result = self[:daemonize] ? daemonize_process : execute_process
 
     if !result[:error]
