@@ -3,8 +3,13 @@ class Eye::Checker::FileTouched < Eye::Checker
   param :file, [String], true
   param :delete, [TrueClass, FalseClass]
 
+  def initialize(*args)
+    super
+    self.file = process.expand_path(file) if process && file
+  end
+
   def get_value
-    File.exists?(file)
+    File.exist?(file)
   end
 
   def good?(value)

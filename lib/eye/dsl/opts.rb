@@ -94,7 +94,14 @@ class Eye::Dsl::Opts < Eye::Dsl::PureOpts
     @config[:notify].delete(contact.to_s)
   end
 
+  def set_stop_command(cmd)
+    raise Eye::Dsl::Error, "cannot use both stop_signals and stop_command" if @config[:stop_signals]
+    super
+  end
+
   def stop_signals(*args)
+    raise Eye::Dsl::Error, "cannot use both stop_signals and stop_command" if @config[:stop_command]
+
     if args.count == 0
       return @config[:stop_signals]
     end
@@ -172,6 +179,30 @@ class Eye::Dsl::Opts < Eye::Dsl::PureOpts
     end
 
     on_server
+  end
+
+  def load_env(filename = '~/.env', raise_when_no_file = true)
+    fnames = [File.expand_path(filename, @config[:working_dir]),
+      File.expand_path(filename)].uniq
+    filenames = fnames.select { |f| File.exist?(f) }
+
+    if filenames.size < 1
+      unless raise_when_no_file
+        warn "load_env not found file: '#{filenames.first}'"
+        return
+      else
+        raise Eye::Dsl::Error, "load_env not found in #{fnames}"
+      end
+    end
+    raise Eye::Dsl::Error, "load_env conflict filenames: #{filenames}" if filenames.size > 1
+
+    info "load_env from '#{filenames.first}'"
+    Eye::Utils.load_env(filenames.first).each { |k, v| env k => v }
+  end
+
+  def skip_group_action(act, val = true)
+    @config[:skip_group_actions] ||= {}
+    @config[:skip_group_actions][act] = val
   end
 
 private

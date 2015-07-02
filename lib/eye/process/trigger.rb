@@ -16,12 +16,20 @@ module Eye::Process::Trigger
     self.triggers.each { |trigger| trigger.notify(transition, state_reason) }
   end
 
-  def retry_start_after_flapping
-    return unless unmonitored?
-    return unless state_reason.to_s.include?('flapping') # TODO: remove hackety
+  # conditional start, used in triggers, to start only from unmonitored state, and only if special reason
+  def conditional_start
+    unless unmonitored?
+      warn "skip, because in state #{state_name}"
+      return
+    end
 
-    schedule :start, Eye::Reason.new(:'retry start after flapping')
-    self.flapping_times += 1
+    previous_reason = state_reason
+    if last_scheduled_reason && previous_reason && last_scheduled_reason.class != previous_reason.class
+      warn "skip, last_scheduled_reason(#{last_scheduled_reason.inspect}) != previous_reason(#{previous_reason})"
+      return
+    end
+
+    start
   end
 
 private

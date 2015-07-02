@@ -9,7 +9,7 @@ module Eye::Controller::Load
   end
 
   def load(*args)
-    h = args.extract_options!
+    args.extract_options!
     obj_strs = args.flatten
     info "=> loading: #{obj_strs}"
 
@@ -58,12 +58,7 @@ private
     return res if obj_strs.empty?
 
     obj_strs.each do |filename|
-      mask = if File.directory?(filename)
-        File.join filename, '{*.eye}'
-      else
-        filename
-      end
-
+      mask = File.directory?(filename) ? File.join(filename, '{*.eye}') : filename
       debug { "loading: globbing mask #{mask}" }
 
       sub = []
@@ -83,7 +78,7 @@ private
     debug { "parsing: #{filename}" }
 
     cfg = Eye::Dsl.parse(nil, filename)
-    @current_config.merge(cfg).validate!(false) # just validate summary config here
+    @current_config.merge(cfg).validate! # just validate summary config here
     Eye.parsed_config = nil # remove link on config, for better gc
     cfg
   end
@@ -92,7 +87,7 @@ private
   def load_config(filename, config)
     info "loading: #{filename}"
     new_cfg = @current_config.merge(config)
-    new_cfg.validate!
+    new_cfg.validate!(config.application_names)
 
     load_options(new_cfg.settings)
     create_objects(new_cfg.applications, config.application_names)

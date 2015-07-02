@@ -6,8 +6,9 @@ class Eye::Notify
 
   autoload :Mail,     'eye/notify/mail'
   autoload :Jabber,   'eye/notify/jabber'
+  autoload :Slack,    'eye/notify/slack'
 
-  TYPES = {:mail => 'Mail', :jabber => 'Jabber'}
+  TYPES = {:mail => 'Mail', :jabber => 'Jabber', :slack => 'Slack'}
 
   def self.get_class(type)
     klass = eval("Eye::Notify::#{TYPES[type]}") rescue nil
@@ -107,12 +108,9 @@ class Eye::Notify
     end
   end
 
-private
-
   %w{at host message name full_name pid level}.each do |name|
     define_method("msg_#{name}") do
       @message_h[name.to_sym]
     end
   end
-
 end

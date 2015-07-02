@@ -27,10 +27,10 @@ private
     error!(res) unless res.is_a?(Hash)
     say_filename = (res.size > 1)
     error = false
-    res.each do |filename, _res|
+    res.each do |filename, res2|
       say "#{filename}: ", nil, true if say_filename
-      show_load_message(_res, opts)
-      error = true if _res[:error]
+      show_load_message(res2, opts)
+      error = true if res2[:error]
     end
 
     exit(1) if error
@@ -54,10 +54,10 @@ private
     end
   end
 
-  def send_command(_cmd, *args)
-    res = cmd(_cmd, *args)
+  def send_command(command, *args)
+    res = cmd(command, *args)
     if res == :unknown_command
-      error! "unknown command :#{_cmd}"
+      error! "unknown command :#{command}"
     elsif res == :corrupted_data
       error! 'something crazy wrong, check eye logs!'
     elsif res.is_a?(Hash)
@@ -65,9 +65,9 @@ private
         error! "Error: #{res[:error]}"
       elsif res = res[:result]
         if res == []
-          error! "command :#{_cmd}, objects not found!"
+          error! "command :#{command}, objects not found!"
         else
-          say "command :#{_cmd} sent to [#{res * ", "}]"
+          say "command :#{command} sent to [#{res * ', '}]"
         end
       end
     else

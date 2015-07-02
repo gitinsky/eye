@@ -33,13 +33,26 @@ module Eye::Utils
     time = Time.at(unix_time.to_i)
     d1 = time.to_date
     d2 = Time.now.to_date
-    time.strftime (d1 == d2) ? D1 : D2
+    time.strftime((d1 == d2) ? D1 : D2)
   end
 
   DF = '%d %b %H:%M'
 
   def self.human_time2(unix_time)
     Time.at(unix_time.to_i).strftime(DF)
+  end
+
+  def self.load_env(filename)
+    content = File.read(filename)
+    env_vars = content.split("\n")
+    h = {}
+    env_vars.each do |e|
+      e = e.gsub(/#.+$/, '').strip
+      next unless e.include?('=')
+      k, v = e.split('=', 2)
+      h[k] = v
+    end
+    h
   end
 
 end

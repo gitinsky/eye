@@ -73,6 +73,7 @@ class Eye::Cli < Thor
       server_start_foreground(configs.first)
 
     elsif server_started?
+      configs << Eye::Local.eyefile if Eye::Local.local_runner
       say_load_result cmd(:load, *configs)
 
     else
@@ -90,23 +91,29 @@ class Eye::Cli < Thor
       cmd(:stop_all, options[:timeout].to_i)
     end
 
-    Eye::Local.client_timeout = 5
+    Eye::Local.client_timeout = Eye::Local.default_client_timeout
     res = _cmd(:quit)
 
     # if eye server got crazy, stop by force
     ensure_stop_previous_server if res != :corrupted_data
 
     # remove pid_file
-    File.delete(Eye::Local.pid_path) if File.exists?(Eye::Local.pid_path)
+    File.delete(Eye::Local.pid_path) if File.exist?(Eye::Local.pid_path)
 
     say "Quit ಠ╭╮ಠ", :yellow
   end
 
-  [:start, :stop, :restart, :unmonitor, :monitor, :delete, :match].each do |_cmd|
-    desc "#{_cmd} MASK[,...]", "#{_cmd} app,group or process"
-    define_method(_cmd) do |*masks|
-      send_command(_cmd, *masks)
+  [:start, :stop, :restart, :unmonitor, :monitor, :delete, :match].each do |command|
+    desc "#{command} MASK[,...]", "#{command} app,group or process"
+    define_method(command) do |*masks|
+      send_command(command, *masks)
     end
+  end
+
+  desc "force_restart MASK[,...]", "restart by stop;start (not by restart_command)"
+  def force_restart(*masks)
+    send_command(:stop, *masks)
+    send_command(:start, *masks)
   end
 
   desc "signal SIG MASK[,...]", "send signal to app,group or process"
@@ -188,7 +195,7 @@ private
 
   def log_trace(tag = '')
     log_file = cmd(:logger_dev)
-    if log_file && File.exists?(log_file)
+    if log_file && File.exist?(log_file)
       Process.exec "tail -n 100 -f #{log_file} | grep '#{tag}'"
     else
       error! "log file not found #{log_file.inspect}"

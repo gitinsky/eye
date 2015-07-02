@@ -43,6 +43,17 @@ describe "Eye::Checker::Http" do
       subject.human_value(subject.get_value).should == mes
     end
 
+    if defined?(Net::OpenTimeout)
+      it "get_value OpenTimeout exception" do
+        a = ""
+        stub(subject).session{ a }
+        stub(subject.session).start{ raise Net::OpenTimeout, "open timeout" }
+
+        subject.get_value.should == {:exception => "OpenTimeout<3.0>"}
+        subject.human_value(subject.get_value).should == "OpenTimeout<3.0>"
+      end
+    end
+
     it "get_value raised" do
       a = ""
       stub(subject).session{ a }
@@ -108,6 +119,79 @@ describe "Eye::Checker::Http" do
       expect{ Eye::Checker.validate!({:type => :http, :every => 5.seconds,
         :times => 1, :kind => :success, :url => "http://localhost:3000/",
         :pattern => /OK/, :timeout => :fix}) }.to raise_error(Eye::Dsl::Validation::Error)
+    end
+  end
+
+  describe "session" do
+    subject { http_checker.send :session }
+
+    context "when scheme is http" do
+      let(:http_checker) { chhttp }
+
+      it "does not use SSL" do
+        expect(subject.use_ssl?).not_to be
+      end
+    end
+
+    context "when scheme is https" do
+      let(:http_checker) { chhttp(url: "https://google.com") }
+
+      it "uses SSL" do
+        expect(subject.use_ssl?).to be
+      end
+
+      it "sets veryfy_mode" do
+        expect(subject.verify_mode).to eq(OpenSSL::SSL::VERIFY_NONE)
+      end
+    end
+
+    context "when 'open_timeout' is given" do
+      let(:http_checker) { chhttp(open_timeout: 42) }
+
+      it "sets open_timout according to given value" do
+        expect(subject.open_timeout).to eq(42)
+      end
+    end
+
+    context "when 'open_timeout' is not given" do
+      let(:http_checker) { chhttp(open_timeout: nil) }
+
+      it "takes 3 seconds by default" do
+        expect(subject.open_timeout).to eq(3)
+      end
+    end
+
+    context "when 'read_timeout' is given" do
+      let(:http_checker) { chhttp(read_timeout: 42) }
+
+      it "sets read_timeout according to given value" do
+        expect(subject.read_timeout).to eq(42)
+      end
+    end
+
+    context "when 'timeout' is given" do
+      let(:http_checker) { chhttp(timeout: 42) }
+
+      it "sets read_timeout according to given value" do
+        expect(subject.read_timeout).to eq(42)
+      end
+    end
+
+    context "when neither 'read_timeout' nor 'timeout' is given" do
+      let(:http_checker) { chhttp(read_timeout: nil, timeout: nil) }
+
+      it "takes 15 secods by default" do
+        expect(subject.read_timeout).to eq(15)
+      end
+    end
+
+    context "when proxy is given" do
+      let(:http_checker) { chhttp(proxy_url: 'http://localhost:1080') }
+
+      it "sets proxy accoring to given value" do
+        expect(subject.proxy_address).to eq('localhost')
+        expect(subject.proxy_port).to eq(1080)
+      end
     end
   end
 

@@ -68,7 +68,7 @@ describe "Eye::Controller" do
     p6 = gr4.processes[0]
     p_check(p6, 'z1', "app2-z1.pid")
 
-    subject.__klass__.should == "Eye::Controller"
+    subject.wrapped_object.class.to_s.should == "Eye::Controller"
   end
 
   it "raise when load config" do
@@ -78,7 +78,7 @@ describe "Eye::Controller" do
   it "should save cache file" do
     FileUtils.rm(Eye::Local.cache_path) rescue nil
     subject.load(fixture("dsl/load.eye"))
-    File.exists?(Eye::Local.cache_path).should be_false
+    File.exist?(Eye::Local.cache_path).should == false
   end
 
   it "should delete all apps" do
@@ -96,7 +96,7 @@ describe "Eye::Controller" do
       end
     D
     subject.command('delete', 'bla')
-    subject.alive?.should be_true
+    subject.alive?.should == true
   end
 
   describe "command" do

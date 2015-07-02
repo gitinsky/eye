@@ -82,7 +82,7 @@ class Eye::Dsl::PureOpts
   def use(proc, *args)
     if proc.is_a?(String)
       self.class.with_parsed_file(proc) do |path|
-        if File.exists?(path)
+        if File.exist?(path)
           Eye::Dsl.debug { "=> load #{path}" }
           self.instance_eval(File.read(path))
           Eye::Dsl.debug { "<= load #{path}" }
@@ -100,8 +100,6 @@ class Eye::Dsl::PureOpts
   end
 
   def nop(*args, &block); end
-
-private
 
   def self.with_parsed_file(file_name)
     saved_parsed_filename = Eye.parsed_filename

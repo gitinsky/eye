@@ -89,7 +89,8 @@ module C
       :pid_file => sample_dir + "/" + p3_pid,
       :children_update_period => Eye::SystemResources::cache.expire + 1,
       :stop_timeout => 5.seconds,
-      :start_timeout => 15.seconds
+      :start_timeout => 15.seconds,
+      :notify => { "abcd" => :warn }
     )
   end
 
@@ -152,11 +153,11 @@ module C
   end
 
   def check_ctime(a = {})
-    {:ctime => {:type => :ctime, :every => 2, :file => sample_dir + "/#{log_name}", :times => [3,5]}.merge(a)}
+    {:ctime => {:type => :ctime, :every => 2, :file => log_name, :times => [3,5]}.merge(a)}
   end
 
   def check_fsize(a = {})
-    {:fsize => {:type => :fsize, :every => 2, :file => sample_dir + "/#{log_name}", :times => [3,5]}.merge(a)}
+    {:fsize => {:type => :fsize, :every => 2, :file => log_name, :times => [3,5]}.merge(a)}
   end
 
   def check_http(a = {})
@@ -248,5 +249,17 @@ require_relative 'rr_celluloid'
 def new_controller(filename)
   Eye::Controller.new.tap do |c|
     c.load(filename)
+  end
+end
+
+RSpec::Matchers.define :contain_only do |*expected|
+  match do |actual|
+    actual.uniq.sort == expected.flatten.sort
+  end
+end
+
+RSpec::Matchers.define :seq do |*expected|
+  match do |actual|
+    actual.join(',').include?(expected.flatten.join(','))
   end
 end

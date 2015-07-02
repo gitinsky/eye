@@ -585,6 +585,25 @@ describe "Eye::Controller::Load" do
     end
   end
 
+  it "contacts bug #118" do
+    subject.load(fixture("dsl/contact1.eye"), fixture("dsl/contact2.eye"))
+    subject.settings[:contacts].keys.sort.should == %w{contact1 contact2}
+  end
+
+  it "using shared object" do
+    cfg1 = <<-S
+      Eye.shared.bla = {"1" => "2"}
+    S
+
+    cfg2 = <<-S2
+      Eye.app(:app2) { process(:p) { pid_file "2.pid"; env Eye.shared.bla; env "3" => "4" } }
+    S2
+
+    subject.load_content(cfg1)
+    subject.load_content(cfg2)
+    subject.process_by_name('p').config[:environment].should == {"1" => "2", "3" => "4"}
+  end
+
   describe "valiadate localize params" do
     it "validate correct working_dir" do
       conf = <<-E
@@ -606,7 +625,32 @@ describe "Eye::Controller::Load" do
         end
       E
       subject.load_content(conf).errors_count.should == 1
-      expect{ Eye::Dsl.parse_apps(conf) }.not_to raise_error(Eye::Process::Validate::Error)
+      expect{ Eye::Dsl.parse_apps(conf) }.not_to raise_error
+    end
+
+    it "when load new project, and old working_dir for another project is invalid" do
+      conf = <<-E
+        Eye.application("bla") do
+          process("1") do
+            pid_file "1.pid"
+            working_dir "/tmp"
+          end
+        end
+      E
+      subject.load_content(conf).should_be_ok
+
+      # patch here controller config, to emulate spec
+      subject.current_config.applications['bla'][:groups]['__default__'][:processes]['1'][:working_dir] = '/tmp2'
+
+      conf = <<-E
+        Eye.application("bla2") do
+          process("2") do
+            pid_file "2.pid"
+            working_dir "/tmp"
+          end
+        end
+      E
+      subject.load_content(conf).should_be_ok
     end
 
     [:uid, :gid].each do |s|

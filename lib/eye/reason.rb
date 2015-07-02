@@ -17,4 +17,7 @@ class Eye::Reason
       "#{super} by user"
     end
   end
+
+  class Flapping < Eye::Reason; end
+  class StartingGuard < Eye::Reason; end
 end

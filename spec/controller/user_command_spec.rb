@@ -20,10 +20,10 @@ describe "Controller user_command" do
     subject.load_content(cfg)
     sleep 0.5
 
-    File.exists?(C.tmp_file).should == false
+    File.exist?(C.tmp_file).should == false
     subject.command('user_command', 'abcd', 'proc')
     sleep 0.5
-    File.exists?(C.tmp_file).should == true
+    File.exist?(C.tmp_file).should == true
   end
 
   it "should execute signals cmd" do
@@ -48,7 +48,7 @@ describe "Controller user_command" do
     Eye::System.pid_alive?(@process.pid).should == true
 
     subject.command('user_command', 'abcd', 'app')
-    sleep 0.7
+    sleep 1
 
     Eye::System.pid_alive?(@process.pid).should == false
   end

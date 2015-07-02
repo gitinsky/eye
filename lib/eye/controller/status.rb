@@ -2,7 +2,7 @@ module Eye::Controller::Status
 
   def debug_data(*args)
     h = args.extract_options!
-    actors = Celluloid::Actor.all.map{|actor| actor.__klass__ }.group_by{|a| a}.map{|k,v| [k, v.size]}.sort_by{|a|a[1]}.reverse
+    actors = Celluloid::Actor.all.map{|actor| actor.wrapped_object.class.to_s }.group_by{|a| a}.map{|k,v| [k, v.size]}.sort_by{ |a| a[1] }.reverse
 
     res = {
       :about => Eye::ABOUT,
@@ -10,6 +10,7 @@ module Eye::Controller::Status
       :ruby => RUBY_DESCRIPTION,
       :gems => %w|Celluloid Celluloid::IO StateMachine NIO Timers Sigar|.map{|c| gem_version(c) },
       :logger => Eye::Logger.args.present? ? [Eye::Logger.dev.to_s, *Eye::Logger.args] : Eye::Logger.dev.to_s,
+      :dir => Eye::Local.dir,
       :pid_path => Eye::Local::pid_path,
       :sock_path => Eye::Local::socket_path,
       :actors => actors

@@ -8,11 +8,14 @@ class Eye::Config
   end
 
   def merge(other_config)
-    Eye::Config.new(@settings.merge(other_config.settings), @applications.merge(other_config.applications))
+    new_settings = {}
+    Eye::Utils.deep_merge!(new_settings, @settings)
+    Eye::Utils.deep_merge!(new_settings, other_config.settings)
+    Eye::Config.new(new_settings, @applications.merge(other_config.applications))
   end
 
   def merge!(other_config)
-    @settings.merge!(other_config.settings)
+    Eye::Utils.deep_merge!(@settings, other_config.settings)
     @applications.merge!(other_config.applications)
   end
 
@@ -21,7 +24,7 @@ class Eye::Config
   end
 
   # raise an error if config wrong
-  def validate!(localize = true)
+  def validate!(validate_apps = [])
     all_processes = processes
 
     # Check blank pid_files
@@ -55,7 +58,7 @@ class Eye::Config
 
     # validate processes with their own validate
     all_processes.each do |process_cfg|
-      Eye::Process.validate process_cfg, localize
+      Eye::Process.validate process_cfg, validate_apps.include?(process_cfg[:application])
     end
 
     # just to be sure ENV was not removed

@@ -20,19 +20,23 @@ module Eye::Dsl::Validation
     def defaults; @defaults ||= {}; end
     def variants; @variants ||= {}; end
 
-    def param(param, types = [], should_be = false, default = nil, _variants = nil)
+    def param(param, types = [], should_be = false, default = nil, variants = nil)
       param = param.to_sym
 
-      validates[param] = types
-      should_bes << param if should_be
+      self.validates[param] = types
+      self.should_bes << param if should_be
       param_default(param, default)
-      variants[param] = _variants
+      self.variants[param] = variants
 
       return if param == :do
 
       define_method "#{param}" do
         value = @options[param]
-        value.nil? ? default : value
+        value.nil? ? self.class.defaults[param] : value
+      end
+
+      define_method "#{param}=" do |value|
+        @options[param] = value
       end
     end
 
